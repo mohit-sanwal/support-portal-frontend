@@ -2,49 +2,56 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { registerApi } from "../../lib/api";
 
 export default function Register() {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
-  const handleRegister = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
-    e.preventDefault(); // 🔥 Enter + reload prevent
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
 
     try {
       await registerApi({ username, password });
-      alert("User registered successfully!");
+      alert("Registered successfully!");
       router.push("/login");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert("Something went wrong");
-      }
+    } catch (err) {
+      alert("User already exists");
     }
+
+    setLoading(false);
   };
 
   return (
-    <form onSubmit={handleRegister}>
-      <h2>Register</h2>
+    <div className="auth-container">
+      <form className="auth-card" onSubmit={handleRegister}>
+        <h2>Register</h2>
 
-      <input
-        placeholder="username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
+        <input
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
 
-      <input
-        type="password"
-        placeholder="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <button type="submit">Register</button>
-    </form>
+        <button type="submit" disabled={loading}>
+          {loading ? "Creating..." : "Register"}
+        </button>
+
+        <p className="auth-link">
+          Already have an account? <Link href="/login">Login</Link>
+        </p>
+      </form>
+    </div>
   );
 }

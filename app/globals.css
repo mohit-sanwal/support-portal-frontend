@@ -1,26 +1,211 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ---------- RESET ---------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f5f6f8;
+  font-family: Arial, sans-serif;
+}
+
+/* ---------- LAYOUT ---------- */
+.container {
+  padding: 16px;
+  max-width: 900px;
+  margin: auto;
+}
+
+/* ---------- TOPBAR ---------- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* ---------- CREATE BOX ---------- */
+.create-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.create-box input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.create-box button {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: black;
+  color: white;
+  cursor: pointer;
+}
+
+/* Desktop */
+@media (min-width: 600px) {
+  .create-box {
+    flex-direction: row;
+  }
+
+  .create-box input {
+    flex: 1;
+  }
+}
+
+/* ---------- TABLE ---------- */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table thead {
+  background: #f1f1f1;
+}
+
+.table th,
+.table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap; /* 🔥 alignment fix */
+}
+
+/* Last column (actions) alignment */
+.table th:last-child,
+.table td:last-child {
+  text-align: right;
+}
+
+/* ---------- BADGES ---------- */
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.badge.OPEN {
+  background: gray;
+}
+
+.badge.IN_PROGRESS {
+  background: orange;
+}
+
+.badge.DONE {
+  background: green;
+}
+
+/* ---------- ACTION BUTTONS ---------- */
+.actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  min-height: 36px;
+}
+
+.btn.start {
+  background: orange;
+  color: white;
+}
+
+.btn.done {
+  background: green;
+  color: white;
+}
+
+.btn.delete {
+  background: red;
+  color: white;
+}
+
+/* ---------- STATES ---------- */
+.loader {
+  margin-top: 16px;
+  font-weight: bold;
+}
+
+.empty {
+  margin-top: 16px;
+  text-align: center;
+  color: gray;
+}
+
+/* ---------- AUTH (login/register) ---------- */
+.auth-container {
+  display: flex;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  background: white;
+  padding: 24px;
+  border-radius: 10px;
+  width: 300px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.auth-card h2 {
+  margin-bottom: 16px;
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.auth-card button {
+  width: 100%;
+  padding: 10px;
+  background: black;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+
+.auth-link {
+  margin-top: 10px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ---------- LOGOUT ---------- */
+.logout-btn {
+  padding: 6px 12px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
