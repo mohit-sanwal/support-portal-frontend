@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   getTickets,
   createTicket,
@@ -9,6 +10,7 @@ import {
 } from "../lib/api";
 
 export default function Home() {
+   const router = useRouter();
   const [tickets, setTickets] = useState([]);
   const [title, setTitle] = useState("");
 
@@ -18,7 +20,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    loadTickets();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+    } else {
+       loadTickets();
+    }
   }, []);
 
   const handleCreate = async () => {
