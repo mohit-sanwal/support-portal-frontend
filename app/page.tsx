@@ -21,6 +21,7 @@ export default function Home() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [title, setTitle] = useState("");
+  const [role, setRole] = useState<string | null>(null);
   const router = useRouter();
 
 
@@ -42,9 +43,12 @@ export default function Home() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+   
     if (!token) {
       router.push("/login");
     } else {
+      const r = localStorage.getItem("role");
+      setRole(r);
       loadTickets();
     }
   }, []);
@@ -72,6 +76,31 @@ export default function Home() {
     <div className="container">
       <div className="topbar">
         <h1>Support Portal</h1>
+        {role === "super_admin" && (
+          <button 
+          onClick={() => router.push("/superAdmin")} 
+          style={{
+            background: "black",
+            color: "white",
+            padding: "8px 12px",
+            borderRadius: "5px",
+          }}>
+            Super Admin Panel
+          </button>
+        )}
+        
+        {role === "admin" && (
+          <button 
+          onClick={() => router.push("/admin")} 
+          style={{
+            background: "black",
+            color: "white",
+            padding: "8px 12px",
+            borderRadius: "5px",
+          }}>
+            Admin Panel
+          </button>
+        )}
         <button className="logout-btn" onClick={handleLogout}>
           Logout
         </button>
