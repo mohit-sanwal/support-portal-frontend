@@ -18,6 +18,7 @@ export default function Login() {
     try {
       const data = await loginApi({ username, password });
       localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
       router.push("/");
     } catch (err: unknown) {
       alert("Invalid credentials");

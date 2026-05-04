@@ -1,4 +1,12 @@
-import {LoginRequest, RegisterRequest, AuthResponse , ErrorResponse, Ticket, AuthRequest } from '../types'
+import {
+  LoginRequest,
+  RegisterRequest, 
+  AuthResponse , 
+  ErrorResponse, 
+  Ticket, 
+  AuthRequest, 
+  User 
+} from '../types'
 
 
 console.log('base url--- ', `${process.env.NEXT_PUBLIC_API_BASE_URL}`)
@@ -106,6 +114,37 @@ export const loginApi = async (
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
+  });
+
+  const jsonData = await res.json();
+
+  if (!res.ok) throw new Error(jsonData.error);
+
+  return jsonData;
+};
+
+
+export const getUsersApi = async (): Promise<User[]> => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/users`, {
+    method: "GET",
+    headers: getAuthHeaders()
+  });
+
+  const jsonData = await res.json();
+
+  if (!res.ok) throw new Error(jsonData.error);
+
+  return jsonData;
+};
+
+export const makeAdminApi = async (id: number): Promise<{ message: string }> => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/users/${id}/make-admin`, {
+    method: "PATCH",
+    headers: getAuthHeaders()
   });
 
   const jsonData = await res.json();

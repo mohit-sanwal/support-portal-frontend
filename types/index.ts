@@ -10,6 +10,7 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   token: string;
+  role: string;
 }
 
 export interface ErrorResponse {
@@ -28,4 +29,10 @@ export interface Ticket {
 export interface AuthRequest {
   username: string;
   password: string;
+}
+
+export interface User {
+  id: number;
+  username: string;
+  role: string;
 }
