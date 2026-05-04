@@ -1,6 +1,8 @@
 import {LoginRequest, RegisterRequest, AuthResponse , ErrorResponse, Ticket, AuthRequest } from '../types'
 
-const BASE_URL = `${process.env.API_BASE_URL}/api`;
+
+console.log('base url--- ', `${process.env.NEXT_PUBLIC_API_BASE_URL}`)
+const BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
 
 
 
