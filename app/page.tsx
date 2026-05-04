@@ -41,7 +41,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    loadTickets();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+    } else {
+      loadTickets();
+    }
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
