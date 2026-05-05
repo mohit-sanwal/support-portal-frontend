@@ -3,32 +3,38 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { logout } from "../lib/api";
+import {Ticket, User} from "../types"
 import {
   getTickets,
   updateTicket,
   deleteTicket,
   createTicket,
+  admin_or_superAdmin,
+  getCurrentUserApi
 } from "../lib/api";
-
-interface Ticket {
-  id: number;
-  title: string;
-  status: string;
-  priority: string;
-}
 
 export default function Home() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [title, setTitle] = useState("");
   const [role, setRole] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
-
 
   const handleLogout = () => {
     logout(); // token remove
     router.push("/login");
   };
+
+
+  const fetchUser = async () => {
+      try {
+        const data = await getCurrentUserApi();
+        setUser(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
   const loadTickets = async () => {
     setLoading(true);
@@ -49,6 +55,7 @@ export default function Home() {
     } else {
       const r = localStorage.getItem("role");
       setRole(r);
+      fetchUser();
       loadTickets();
     }
   }, []);
@@ -76,6 +83,12 @@ export default function Home() {
     <div className="container">
       <div className="topbar">
         <h1>Support Portal</h1>
+        {user && (
+          <div>
+            <p>👤 name - {user.username}</p>
+            <p>🔐 Role - {user.role}</p>
+          </div>
+        )}
         {role === "super_admin" && (
           <button 
           onClick={() => router.push("/superAdmin")} 
@@ -163,13 +176,13 @@ export default function Home() {
                     >
                       ✔ Done
                     </button>
-
+                  {admin_or_superAdmin(role) ?
                     <button
                       className="btn delete"
                       onClick={() => handleDelete(t.id)}
                     >
                       🗑 Delete
-                    </button>
+                    </button> : '' }
                   </div>
                 </td>
               </tr>

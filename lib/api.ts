@@ -5,7 +5,8 @@ import {
   ErrorResponse, 
   Ticket, 
   AuthRequest, 
-  User 
+  User,
+  ApiMessage
 } from '../types'
 
 
@@ -28,6 +29,10 @@ const getAuthHeaders = () => {
   };
 };
 
+export const admin_or_superAdmin = (role: any) => {
+  return ['admin', 'super_admin'].includes(role);
+}
+
 // ---------------- API ----------------
 
 // ✅ GET tickets (FIXED: added token)
@@ -45,7 +50,7 @@ export const getTickets = async (): Promise<Ticket[]> => {
 export const createTicket = async (
   data: Partial<Ticket>
 ): Promise<Ticket> => {
-  const res = await fetch(`${BASE_URL}/tickets`, {
+  const res = await fetch(`${BASE_URL}/create-ticket`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -152,6 +157,60 @@ export const makeAdminApi = async (id: number): Promise<{ message: string }> => 
   if (!res.ok) throw new Error(jsonData.error);
 
   return jsonData;
+};
+
+
+export const demoteUserApi = async (id: number): Promise<ApiMessage> => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/users/${id}/demote`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const jsonData = await res.json();
+
+  if (!res.ok) throw new Error(jsonData.error);
+
+  return jsonData;
+};
+
+
+export const deleteUserApi = async (id: number): Promise<ApiMessage> => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/users/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const jsonData = await res.json();
+
+  if (!res.ok) throw new Error(jsonData.error);
+
+  return jsonData;
+};
+
+
+export const getCurrentUserApi = async (): Promise<User> => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/auth/current-user`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error);
+
+  return data;
 };
 
 // ---------------- LOGOUT ----------------
