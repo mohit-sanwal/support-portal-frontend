@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getUsersApi } from "../../lib/api";
-import styles from "../superAdmin/SuperAdmin.module.css";
+import styles from "../superAdmin/superAdmin.module.css";
 import { useRouter } from "next/navigation";
 import {User} from '../../types'
 

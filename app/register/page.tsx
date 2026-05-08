@@ -1,56 +1,122 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import styles from "../auth.module.css";
+
 import { registerApi } from "../../lib/api";
 
-export default function Register() {
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+export default function RegisterPage() {
   const router = useRouter();
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  const [username, setUsername] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const handleRegister = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault();
+
     setLoading(true);
 
+    setError("");
+
     try {
-      await registerApi({ username, password });
-      alert("Registered successfully!");
+      await registerApi({
+        username,
+        password,
+      });
+
       router.push("/login");
-    } catch (err) {
-      alert("User already exists");
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.error ||
+          "Registration failed"
+      );
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="auth-container">
-      <form className="auth-card" onSubmit={handleRegister}>
-        <h2>Register</h2>
+    <div className={styles.authPage}>
+      <form
+        className={styles.authCard}
+        onSubmit={handleRegister}
+      >
+        <div className={styles.authHeader}>
+          <h1 className={styles.authTitle}>
+            Create Account
+          </h1>
 
-        <input
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+          <p className={styles.authSubtitle}>
+            Register to manage support
+            tickets and collaborate with
+            your team
+          </p>
+        </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className={styles.authForm}>
+          {error && (
+            <div className={styles.error}>
+              {error}
+            </div>
+          )}
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Creating..." : "Register"}
-        </button>
+          <div className={styles.field}>
+            <label>Username</label>
 
-        <p className="auth-link">
-          Already have an account? <Link href="/login">Login</Link>
-        </p>
+            <input
+              type="text"
+              placeholder="Choose username"
+              value={username}
+              onChange={(e) =>
+                setUsername(e.target.value)
+              }
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label>Password</label>
+
+            <input
+              type="password"
+              placeholder="Choose password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={styles.authBtn}
+          >
+            {loading
+              ? "Creating account..."
+              : "Register"}
+          </button>
+        </div>
+
+        <div className={styles.authFooter}>
+          Already have an account?{" "}
+          <Link href="/login">
+            Login
+          </Link>
+        </div>
       </form>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import styles from "./SuperAdmin.module.css";
+import styles from "./superAdmin.module.css";
 import {
   getUsersApi,
   makeAdminApi,
