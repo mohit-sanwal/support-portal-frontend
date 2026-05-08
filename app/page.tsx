@@ -1,77 +1,154 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Search,
+  Plus,
+  ChevronDown,
+  LayoutDashboard,
+  Shield,
+  UserCircle2,
+  LogOut,
+  Trash2,
+} from "lucide-react";
+
 import { logout } from "../lib/api";
-import {Ticket, User} from "../types"
+import { Ticket, User } from "../types";
+
+import AssignDropdown from "../components/assignedDropdown";
+import StatusDropdown from "../components/statusDropdown";
+import Comments from "../components/comments";
+
 import {
   getTickets,
-  updateTicket,
   deleteTicket,
   createTicket,
-  admin_or_superAdmin,
-  getCurrentUserApi
+  getCurrentUserApi,
 } from "../lib/api";
 
 export default function Home() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [title, setTitle] = useState("");
+  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const [search, setSearch] = useState("");
+
   const [role, setRole] = useState<string | null>(null);
+
   const [user, setUser] = useState<User | null>(null);
+
+  const [openRow, setOpenRow] = useState<number | null>(null);
+
+  const [showMenu, setShowMenu] = useState(false);
+
+  const [showModal, setShowModal] = useState(false);
+
+  const [title, setTitle] = useState("");
+
+  const [description, setDescription] = useState("");
+
   const router = useRouter();
 
-  const handleLogout = () => {
-    logout(); // token remove
-    router.push("/login");
-  };
+  const pathname = usePathname();
 
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const fetchUser = async () => {
-      try {
-        const data = await getCurrentUserApi();
-        setUser(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-  const loadTickets = async () => {
-    setLoading(true);
     try {
-      const data = await getTickets();
-      setTickets(data);
+      const data = await getCurrentUserApi();
+      setUser(data);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const loadTickets = async () => {
+    setLoading(true);
+
+    try {
+      const data = await getTickets();
+
+      setTickets(data);
+      setFilteredTickets(data);
+    } catch (err) {
+      console.error(err);
+    }
+
     setLoading(false);
   };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-   
+
     if (!token) {
       router.push("/login");
-    } else {
-      const r = localStorage.getItem("role");
-      setRole(r);
-      fetchUser();
-      loadTickets();
+      return;
     }
+
+    const r = localStorage.getItem("role");
+
+    setRole(r);
+
+    fetchUser();
+    loadTickets();
   }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!title.trim()) return;
+  useEffect(() => {
+    const filtered = tickets.filter((ticket) => {
+      const text = search.toLowerCase();
 
-      await createTicket({ title });
-      setTitle("");
-      loadTickets();
+      return (
+        ticket.title?.toLowerCase().includes(text) ||
+        ticket.description?.toLowerCase().includes(text) ||
+        ticket.created_by_name?.toLowerCase().includes(text)
+      );
+    });
+
+    setFilteredTickets(filtered);
+  }, [search, tickets]);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node)
+      ) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
   };
 
-  const handleStatus = async (id: number, status: string) => {
-    await updateTicket(id, { status });
-    loadTickets();
+  const handleCreate = async () => {
+    if (!title.trim()) return;
+
+    try {
+      await createTicket({
+        title,
+        description,
+      });
+
+      setTitle("");
+      setDescription("");
+
+      setShowModal(false);
+
+      loadTickets();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -79,116 +156,314 @@ export default function Home() {
     loadTickets();
   };
 
+  const navigateButton = () => {
+    if (pathname === "/superAdmin") {
+      return {
+        label: "Dashboard",
+        icon: <LayoutDashboard size={16} />,
+        action: () => router.push("/"),
+      };
+    }
+
+    if (pathname === "/admin") {
+      return {
+        label: "Dashboard",
+        icon: <LayoutDashboard size={16} />,
+        action: () => router.push("/"),
+      };
+    }
+
+    if (role === "super_admin") {
+      return {
+        label: "Super Admin",
+        icon: <Shield size={16} />,
+        action: () => router.push("/superAdmin"),
+      };
+    }
+
+    if (role === "admin") {
+      return {
+        label: "Admin Panel",
+        icon: <Shield size={16} />,
+        action: () => router.push("/admin"),
+      };
+    }
+
+    return null;
+  };
+
+  const navBtn = navigateButton();
+
   return (
-    <div className="container">
-      <div className="topbar">
-        <h1>Support Portal</h1>
-        {user && (
-          <div>
-            <p>👤 name - {user.username}</p>
-            <p>🔐 Role - {user.role}</p>
+    <div className="page">
+      {/* HEADER */}
+      <header className="header">
+        <div>
+          <h1 className="logo">Support Portal</h1>
+          <p className="subText">
+            Manage tickets, assignments and discussion
+          </p>
+        </div>
+
+        <div className="headerRight">
+          {navBtn && (
+            <button
+              className="panelBtn"
+              onClick={navBtn.action}
+            >
+              {navBtn.icon}
+              {navBtn.label}
+            </button>
+          )}
+
+          <div className="profileWrapper" ref={menuRef}>
+            <button
+              className="profileBtn"
+              onClick={() => setShowMenu(!showMenu)}
+            >
+              <UserCircle2 size={36} />
+            </button>
+
+            {showMenu && (
+              <div className="profileMenu">
+                <div className="profileInfo">
+                  <p className="profileName">
+                    {user?.username}
+                  </p>
+
+                  <p className="profileRole">
+                    {user?.role}
+                  </p>
+                </div>
+
+                <button
+                  className="menuLogout"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
-        )}
-        {role === "super_admin" && (
-          <button 
-          onClick={() => router.push("/superAdmin")} 
-          style={{
-            background: "black",
-            color: "white",
-            padding: "8px 12px",
-            borderRadius: "5px",
-          }}>
-            Super Admin Panel
-          </button>
-        )}
-        
-        {role === "admin" && (
-          <button 
-          onClick={() => router.push("/admin")} 
-          style={{
-            background: "black",
-            color: "white",
-            padding: "8px 12px",
-            borderRadius: "5px",
-          }}>
-            Admin Panel
-          </button>
-        )}
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
+        </div>
+      </header>
+
+      {/* SEARCH + CREATE */}
+      <div className="toolbar">
+        <div className="searchBox">
+          <Search size={18} />
+
+          <input
+            type="text"
+            placeholder="Search tickets..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <button
+          className="createBtn"
+          onClick={() => setShowModal(true)}
+        >
+          <Plus size={18} />
+          Create Ticket
         </button>
       </div>
-      
-      <form className="create-box" onSubmit={handleCreate}>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Create new ticket..."
-        />
-        <button type="submit" disabled={loading}> Create </button>
-      </form>
 
-      {/* Loader */}
-      {loading && <div className="loader">Loading...</div>}
-
-      {/* Empty State */}
-      {!loading && tickets.length === 0 && (
-        <div className="empty">
-            No tickets yet 🚀 Create your first one!
+      {/* LOADING */}
+      {loading && (
+        <div className="loaderBox">
+          Loading tickets...
         </div>
       )}
 
-      {/* Table */}
-      {!loading && tickets.length > 0 && (
-        <div className="table-wrapper">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+      {/* EMPTY */}
+      {!loading && filteredTickets.length === 0 && (
+        <div className="emptyState">
+          No tickets found 🚀
+        </div>
+      )}
 
-          <tbody>
-            {tickets.map((t) => (
-              <tr key={t.id}>
-                <td>{t.title}</td>
-
-                <td>
-                  <span className={`badge ${t.status}`}>
-                    {t.status}
-                  </span>
-                </td>
-
-                <td>
-                  <div className="actions">
-                    <button
-                      className="btn start"
-                      onClick={() => handleStatus(t.id, "IN_PROGRESS")}
-                    >
-                      ▶ Start
-                    </button>
-
-                    <button
-                      className="btn done"
-                      onClick={() => handleStatus(t.id, "DONE")}
-                    >
-                      ✔ Done
-                    </button>
-                  {admin_or_superAdmin(role) ?
-                    <button
-                      className="btn delete"
-                      onClick={() => handleDelete(t.id)}
-                    >
-                      🗑 Delete
-                    </button> : '' }
-                  </div>
-                </td>
+      {/* TABLE */}
+      {!loading && filteredTickets.length > 0 && (
+        <div className="tableWrapper">
+          <table className="ticketTable">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Assign</th>
+                <th>Created By</th>
+                <th className="actionColumn" id="actions">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {filteredTickets.map((t) => (
+                <Fragment key={t.id}>
+                  <tr>
+                    <td>
+                      <div className="ticketTitleCell">
+                        <span className="ticketTitle">
+                          {t.title}
+                        </span>
+
+                        {t.description && (
+                          <span className="ticketDescPreview">
+                            {t.description.length > 80
+                              ? t.description.slice(0, 80) + "..."
+                              : t.description}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    <td>
+                      <StatusDropdown
+                        ticketId={t.id}
+                        value={t.status}
+                        onChange={loadTickets}
+                      />
+                    </td>
+
+                    <td>
+                      <AssignDropdown
+                        ticketId={t.id}
+                        onAssigned={loadTickets}
+                        value={t.assigned_to}
+                      />
+                    </td>
+
+                    <td>
+                      <span className="createdByText">
+                        {t.created_by_name}
+                      </span>
+                    </td>
+
+                    <td>
+                      <div className="tableActions">
+                        <button
+                          className="detailsBtn"
+                          onClick={() =>
+                            setOpenRow(
+                              openRow === t.id ? null : t.id
+                            )
+                          }
+                        >
+                          <ChevronDown size={15} />
+                          {openRow === t.id
+                            ? "Hide"
+                            : "Details"}
+                        </button>
+
+                        {(user?.role !== "user" ||
+                          user?.id === t.created_by) && (
+                          <button
+                            className="deleteBtn"
+                            onClick={() =>
+                              handleDelete(t.id)
+                            }
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+
+                  {openRow === t.id && (
+                    <tr>
+                      <td colSpan={5} className="detailsRow">
+                        <div className="ticketDetails">
+                          <div className="descriptionBox">
+                            <h4>Description</h4>
+
+                            <p>
+                              {t.description ||
+                                "No description added"}
+                            </p>
+                          </div>
+
+                          <Comments
+                            ticketId={t.id}
+                            user={user}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    
+      {/* MODAL */}
+      {showModal && (
+        <div
+          className="modalOverlay"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modalHeader">
+              <h2>Create Ticket</h2>
+
+              <button
+                className="closeBtn"
+                onClick={() => setShowModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modalBody">
+              <div className="field">
+                <label>Title</label>
+
+                <input
+                  value={title}
+                  onChange={(e) =>
+                    setTitle(e.target.value)
+                  }
+                  placeholder="Ticket title"
+                />
+              </div>
+
+              <div className="field">
+                <label>Description</label>
+
+                <textarea
+                  rows={6}
+                  value={description}
+                  onChange={(e) =>
+                    setDescription(e.target.value)
+                  }
+                  placeholder="Describe issue..."
+                />
+              </div>
+            </div>
+
+            <div className="modalFooter">
+              <button
+                className="secondaryBtn"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="primaryBtn"
+                onClick={handleCreate}
+              >
+                Create Ticket
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

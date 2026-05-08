@@ -35,7 +35,7 @@ export const admin_or_superAdmin = (role: any) => {
 
 // ---------------- API ----------------
 
-// ✅ GET tickets (FIXED: added token)
+// GET tickets (FIXED: added token)
 export const getTickets = async (): Promise<Ticket[]> => {
   const res = await fetch(`${BASE_URL}/tickets`, {
     headers: getAuthHeaders(),
@@ -46,7 +46,7 @@ export const getTickets = async (): Promise<Ticket[]> => {
   return res.json();
 };
 
-// ✅ CREATE ticket
+// CREATE ticket
 export const createTicket = async (
   data: Partial<Ticket>
 ): Promise<Ticket> => {
@@ -61,7 +61,7 @@ export const createTicket = async (
   return res.json();
 };
 
-// ✅ UPDATE ticket
+// UPDATE ticket
 export const updateTicket = async (
   id: number,
   data: Partial<Ticket>
@@ -77,7 +77,7 @@ export const updateTicket = async (
   return res.json();
 };
 
-// ✅ DELETE ticket
+// DELETE ticket
 export const deleteTicket = async (id: number): Promise<{ message: string }> => {
   const res = await fetch(`${BASE_URL}/tickets/${id}`, {
     method: "DELETE",
@@ -91,7 +91,7 @@ export const deleteTicket = async (id: number): Promise<{ message: string }> => 
 
 // ---------------- AUTH ----------------
 
-// ❌ token removed (IMPORTANT FIX)
+// token removed (IMPORTANT FIX)
 export const registerApi = async (
   data: AuthRequest
 ): Promise<{ message: string }> => {
@@ -103,7 +103,7 @@ export const registerApi = async (
     body: JSON.stringify(data),
   });
 
-  const jsonData = await res.json(); // ✅ FIXED
+  const jsonData = await res.json(); // FIXED
 
   if (!res.ok) throw new Error(jsonData.error);
 
@@ -134,7 +134,7 @@ export const getUsersApi = async (): Promise<User[]> => {
 
   const res = await fetch(`${BASE_URL}/users`, {
     method: "GET",
-    headers: getAuthHeaders()
+    headers: getAuthHeaders(),
   });
 
   const jsonData = await res.json();
@@ -149,7 +149,7 @@ export const makeAdminApi = async (id: number): Promise<{ message: string }> => 
 
   const res = await fetch(`${BASE_URL}/users/${id}/make-admin`, {
     method: "PATCH",
-    headers: getAuthHeaders()
+    headers: getAuthHeaders(),
   });
 
   const jsonData = await res.json();
@@ -165,9 +165,7 @@ export const demoteUserApi = async (id: number): Promise<ApiMessage> => {
 
   const res = await fetch(`${BASE_URL}/users/${id}/demote`, {
     method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   const jsonData = await res.json();
@@ -183,9 +181,7 @@ export const deleteUserApi = async (id: number): Promise<ApiMessage> => {
 
   const res = await fetch(`${BASE_URL}/users/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   const jsonData = await res.json();
@@ -201,9 +197,7 @@ export const getCurrentUserApi = async (): Promise<User> => {
 
   const res = await fetch(`${BASE_URL}/auth/current-user`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   const data = await res.json();
@@ -212,6 +206,115 @@ export const getCurrentUserApi = async (): Promise<User> => {
 
   return data;
 };
+
+
+export const getAssignableUsersApi = async (): Promise<User[]> => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/users/assignable`, {
+    headers: getAuthHeaders(),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error);
+
+  return data;
+};
+
+
+export const assignTicketApi = async (
+  ticketId: number,
+  userId: number
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/tickets/${ticketId}/assign`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error);
+
+  return data;
+};
+
+
+export const addCommentApi = async (
+  ticketId: number,
+  data: { content: string; parent_id?: number }
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(
+    `${BASE_URL}/tickets/${ticketId}/comments`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }
+  );
+
+  const json = await res.json();
+
+  if (!res.ok) throw new Error(json.error);
+
+  return json;
+};
+
+export const getCommentsApi = async (ticketId: number) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(
+    `${BASE_URL}/tickets/${ticketId}/comments`,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+
+  const json = await res.json();
+
+  if (!res.ok) throw new Error(json.error);
+
+  return json;
+};
+
+export const updateCommentApi = async (
+  id: number,
+  data: { content: string }
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/comments/${id}`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) throw new Error(json.error);
+
+  return json;
+};
+
+export const deleteCommentApi = async (id: number) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/comments/${id}`, {
+    method: "DELETE",
+    headers:getAuthHeaders(),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) throw new Error(json.error);
+
+  return json;
+};
+
+
 
 // ---------------- LOGOUT ----------------
 export const logout = (): void => {

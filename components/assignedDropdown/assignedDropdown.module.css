@@ -1,0 +1,11 @@
+.assignDropdown {
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+@media (min-width: 768px) {
+  .assignDropdown {
+    font-size: 14px;
+  }
+}

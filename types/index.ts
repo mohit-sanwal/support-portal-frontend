@@ -22,8 +22,14 @@ export interface Ticket {
   id: number;
   title: string;
   description?: string;
-  priority: string;
+
   status: string;
+
+  assigned_to?: number;
+  assigned_to_name?: string;
+
+  created_by?: number;
+  created_by_name?: string;
 }
 
 export interface AuthRequest {
@@ -39,4 +45,12 @@ export interface User {
 
 export interface ApiMessage {
   message: string;
+}
+
+export interface Comment {
+ id: number;
+  content: string;
+  username: string;
+  created_at: string;
+  replies: Comment[];
 }
