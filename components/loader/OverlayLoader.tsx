@@ -1,4 +1,4 @@
-import styles from './OverlayLoader.module.css'
+import styles from './overlayLoader.module.css'
 
 type Props = {
   show: boolean;
