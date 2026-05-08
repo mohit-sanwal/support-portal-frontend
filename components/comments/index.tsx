@@ -12,7 +12,7 @@ export default function Comments({
   user,
 }: {
   ticketId: number;
-  user: User;
+  user: User | null;
 }) {
   const [comments, setComments] = useState<any[]>([]);
   const [text, setText] = useState("");
