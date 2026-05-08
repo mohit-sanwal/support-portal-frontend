@@ -1,22 +1,40 @@
+
 "use client";
+
 import { useEffect, useState } from "react";
-import { getUsersApi } from "../../lib/api";
-import styles from "../superAdmin/superAdmin.module.css";
+import OverlayLoader from "@/components/loader/OverlayLoader";
+
 import { useRouter } from "next/navigation";
-import {User} from '../../types'
+
+import { Shield, ArrowLeft, ShieldCheck, UserCircle2 } from "lucide-react";
+
+import { getUsersApi } from "../../lib/api";
+
+import styles from "../superAdmin/superAdmin.module.css";
+
+import { User } from "../../types";
 
 export default function Admin() {
+
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(false)
+
   const router = useRouter();
 
-  const fetchUsers = async () => {
+   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const data = await getUsersApi();
       setUsers(data);
+      setLoading(false);
     } catch (err: any) {
       console.error(err.message);
+      setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchUsers();
@@ -24,34 +42,63 @@ export default function Admin() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
+      {loading && (
+                    <OverlayLoader show={loading} />
+                  )}
+      {/* HEADER */}
       <div className={styles.headerTop}>
+
         <button
           className={styles.backBtn}
           onClick={() => router.push("/")}
         >
-          ⬅ Back
+          <ArrowLeft size={16} />
+          Back
         </button>
 
-        <h2 className={styles.title}>Admin Panel</h2>
+        <h2 className={styles.title}>
+          <Shield size={22} />
+          Admin Panel
+        </h2>
       </div>
 
-      {/* Table / Cards */}
+      {/* TABLE */}
       <div className={styles.table}>
-        <div className={styles.header}>
+
+        <div className={styles.adminHeader}>
           <span>Username</span>
           <span>Role</span>
         </div>
 
         {users.map((user) => (
-          <div key={user.id} className={styles.row}>
+          <div key={user.id} className={styles.adminRow}>
+
             <span>{user.username}</span>
 
             <span className={styles.role}>
-              {user.role === "super_admin"
-                ? "🔥 Super Admin"
-                : user.role}
+              {user.role === "super_admin" && (
+                  <div className={styles.roleBadge}>
+                    <ShieldCheck size={16} />
+                    Super Admin
+                  </div>
+                )}
+
+                {user.role === "admin" && (
+                  <div className={styles.roleBadge}>
+                    <Shield size={16} />
+                    Admin
+                  </div>
+                )}
+
+                {user.role === "user" && (
+                  <div className={styles.roleBadge}>
+                    <UserCircle2 size={16} />
+                    User
+                  </div>
+                )}
+
             </span>
+
           </div>
         ))}
       </div>

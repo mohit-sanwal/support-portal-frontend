@@ -30,6 +30,7 @@ export interface Ticket {
 
   created_by?: number;
   created_by_name?: string;
+  created_by_role?: string;
 }
 
 export interface AuthRequest {

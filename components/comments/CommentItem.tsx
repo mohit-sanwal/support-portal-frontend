@@ -24,7 +24,7 @@ export default function CommentItem({
   const [editText, setEditText] = useState(comment.content);
 
   const canModify =
-    currentUser?.role !== "user" ||
+    currentUser?.role === "super_admin" ||
     currentUser?.id === comment.user_id;
 
   const handleReply = async () => {

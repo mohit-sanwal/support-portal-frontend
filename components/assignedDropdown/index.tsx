@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAssignableUsersApi, assignTicketApi } from "../../lib/api";
+import toast from "react-hot-toast";
+
+import { assignTicketApi } from "../../lib/api";
 import { User } from "../../types";
 import styles from "./AssignedDropdown.module.css";
 
@@ -9,38 +11,39 @@ interface Props {
   ticketId: number;
   onAssigned: () => void;
   value: number | undefined;
+  users: User[]
 }
 
-export default function AssignDropdown({ ticketId, onAssigned, value }: Props) {
-  const [users, setUsers] = useState<User[]>([]);
+export default function AssignDropdown({ ticketId, onAssigned, value, users}: Props) {
   const [loading, setLoading] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(value);
 
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const data = await getAssignableUsersApi();
-        setUsers(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    loadUsers();
-  }, []);
-
   const handleAssign = async (userId: number) => {
+    setSelectedUserId(userId);
     setLoading(true);
+    const previous = selectedUserId;
     try {
       await assignTicketApi(ticketId, userId);
       onAssigned();
     } catch (err) {
       console.error(err);
+      toast.error("Something went wrong");
+      setSelectedUserId(previous);
     }
     setLoading(false);
   };
 
   if (users.length === 0) return null;
+
+  if (loading) {
+    return (
+      <div className="miniLoader">
+        <span />
+        <span />
+        <span />
+      </div>
+    );
+  }
 
   return (
    <select
