@@ -10,7 +10,7 @@ import { Shield, ArrowLeft, ShieldCheck, UserCircle2 } from "lucide-react";
 
 import { getUsersApi } from "../../lib/api";
 
-import styles from "../superAdmin/superAdmin.module.css";
+import styles from "../superAdmin/SuperAdmin.module.css";
 
 import { User } from "../../types";
 

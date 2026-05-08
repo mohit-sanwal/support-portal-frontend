@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import OverlayLoader from "@/components/loader/OverlayLoader";
 import { useRouter } from "next/navigation";
-import styles from "./superAdmin.module.css";
+import styles from "./SuperAdmin.module.css";
 
 import {
   ArrowLeft,
