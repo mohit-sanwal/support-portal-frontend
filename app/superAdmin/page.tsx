@@ -1,42 +1,89 @@
+
 "use client";
+
 import { useEffect, useState } from "react";
+import OverlayLoader from "@/components/loader/OverlayLoader";
 import { useRouter } from "next/navigation";
 import styles from "./superAdmin.module.css";
+
+import {
+  ArrowLeft,
+  ShieldCheck,
+  Shield,
+  UserCircle2,
+  UserCog,
+  Trash2,
+  UserRoundX,
+} from "lucide-react";
+
 import {
   getUsersApi,
   makeAdminApi,
-  demoteUserApi,
+  makeUserApi,
   deleteUserApi,
 } from "../../lib/api";
 
+import { User } from "../../types";
 
 export default function SuperAdmin() {
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(false)
+
   const router = useRouter();
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const data = await getUsersApi();
       setUsers(data);
+      setLoading(false);
     } catch (err: any) {
       console.error(err.message);
+      setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleMakeAdmin = async (id: number) => {
-    await makeAdminApi(id);
-    fetchUsers();
+    try {
+      setLoading(true);
+      await makeAdminApi(id);
+      fetchUsers();
+    } catch(err: any) {
+      console.error(err.message);
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDemote = async (id: number) => {
-    await demoteUserApi(id);
-    fetchUsers();
+  const handleMakeUser = async (id: number) => {
+    try {
+      setLoading(true);
+      await makeUserApi(id);
+      fetchUsers();
+    } catch(err: any) {
+      console.error(err.message);
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
+    
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
-    await deleteUserApi(id);
-    fetchUsers();
+    try {
+      setLoading(true);
+      await deleteUserApi(id);
+      fetchUsers();
+    } catch(err: any) {
+      console.error(err.message);
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -45,28 +92,59 @@ export default function SuperAdmin() {
 
   return (
     <div className={styles.container}>
-        <div className={styles.headerTop}>
-            <button
-                className={styles.backBtn}
-                onClick={() => router.push("/")}
-            >
-                ⬅ Back
-            </button>
+      {loading && (
+              <OverlayLoader show={loading} />
+            )}
+      {/* HEADER */}
+      <div className={styles.headerTop}>
+        <button
+          className={styles.backBtn}
+          onClick={() => router.push("/")}
+        >
+          <ArrowLeft size={16} />
+          Back
+        </button>
 
-            <h2 className={styles.title}>Super Admin Panel</h2>
-        </div>
+        <h2 className={styles.title}>
+          <ShieldCheck size={24} />
+          Super Admin Panel
+        </h2>
+      </div>
+
+      {/* TABLE */}
       <div className={styles.table}>
         <div className={styles.header}>
           <span>Username</span>
           <span>Role</span>
           <span>Actions</span>
         </div>
+
         {users.map((user) => (
           <div key={user.id} className={styles.row}>
             <span>{user.username}</span>
 
             <span className={styles.role}>
-              {user.role === "super_admin" ? "🔥 Super Admin" : user.role}
+              {user.role === "super_admin" && (
+                  <div className={styles.roleBadge}>
+                    <ShieldCheck size={16} />
+                    Super Admin
+                  </div>
+                )}
+
+                {user.role === "admin" && (
+                  <div className={styles.roleBadge}>
+                    <Shield size={16} />
+                    Admin
+                  </div>
+                )}
+
+                {user.role === "user" && (
+                  <div className={styles.roleBadge}>
+                    <UserCircle2 size={16} />
+                    User
+                  </div>
+                )}
+
             </span>
 
             <div className={styles.actions}>
@@ -75,25 +153,34 @@ export default function SuperAdmin() {
                   {user.role !== "admin" && (
                     <button
                       className={styles.promote}
-                      onClick={() => handleMakeAdmin(user.id)}
+                      onClick={() =>
+                        handleMakeAdmin(user.id)
+                      }
                     >
+                      <UserCog size={14} />
                       Make Admin
                     </button>
                   )}
 
                   {user.role === "admin" && (
                     <button
-                      className={styles.demote}
-                      onClick={() => handleDemote(user.id)}
+                      className={styles.makeUser}
+                      onClick={() =>
+                        handleMakeUser(user.id)
+                      }
                     >
-                      Demote
+                      <UserRoundX size={14} />
+                      Make User
                     </button>
                   )}
 
                   <button
                     className={styles.delete}
-                    onClick={() => handleDelete(user.id)}
+                    onClick={() =>
+                      handleDelete(user.id)
+                    }
                   >
+                    <Trash2 size={14} />
                     Delete
                   </button>
                 </>

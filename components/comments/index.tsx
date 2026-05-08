@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { getCommentsApi, addCommentApi } from "../../lib/api";
 import { User } from "../../types";
 import CommentItem from "./CommentItem";
@@ -24,6 +25,7 @@ export default function Comments({
       const data = await getCommentsApi(ticketId);
       setComments(data);
     } catch (err) {
+      toast.error("Something went wrong");
       console.error(err);
     }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
@@ -19,19 +20,23 @@ import { Ticket, User } from "../types";
 import AssignDropdown from "../components/assignedDropdown";
 import StatusDropdown from "../components/statusDropdown";
 import Comments from "../components/comments";
+import OverlayLoader from "@/components/loader/OverlayLoader";
 
 import {
   getTickets,
   deleteTicket,
   createTicket,
   getCurrentUserApi,
+  getAssignableUsersApi
 } from "../lib/api";
 
 export default function Home() {
+  const [users, setUsers] = useState<User[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
 
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [search, setSearch] = useState("");
 
@@ -49,6 +54,8 @@ export default function Home() {
 
   const [description, setDescription] = useState("");
 
+  const [creating, setCreating] = useState(false);
+
   const router = useRouter();
 
   const pathname = usePathname();
@@ -59,24 +66,45 @@ export default function Home() {
     try {
       const data = await getCurrentUserApi();
       setUser(data);
+      setRole(data.role);
     } catch (err) {
       console.error(err);
+      toast.error("Something went wrong");
     }
   };
 
-  const loadTickets = async () => {
-    setLoading(true);
 
+
+  const loadTickets = async (showLoader = true) => {
+
+      if (showLoader) {
+        setLoading(true);
+      }
+
+      try {
+        const data = await getTickets();
+
+        setTickets(data);
+        setFilteredTickets(data);
+
+      } catch (err) {
+        console.error(err);
+        toast.error("Something went wrong");
+      }
+
+      if (showLoader) {
+        setLoading(false);
+      }
+  };
+
+  const loadUsers = async () => {
     try {
-      const data = await getTickets();
-
-      setTickets(data);
-      setFilteredTickets(data);
+      const data = await getAssignableUsersApi();
+      setUsers(data);
     } catch (err) {
       console.error(err);
+      toast.error("Something went wrong");
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -87,12 +115,9 @@ export default function Home() {
       return;
     }
 
-    const r = localStorage.getItem("role");
-
-    setRole(r);
-
     fetchUser();
     loadTickets();
+    loadUsers();
   }, []);
 
   useEffect(() => {
@@ -132,28 +157,59 @@ export default function Home() {
   };
 
   const handleCreate = async () => {
-    if (!title.trim()) return;
 
-    try {
-      await createTicket({
-        title,
-        description,
-      });
+      if (creating) return;
 
-      setTitle("");
-      setDescription("");
+      if (!title.trim()) return;
 
-      setShowModal(false);
+      try {
 
-      loadTickets();
-    } catch (err) {
-      console.error(err);
-    }
+        setCreating(true);
+
+        await createTicket({
+          title,
+          description,
+        });
+
+        setTitle("");
+        setDescription("");
+
+        setShowModal(false);
+
+        loadTickets();
+
+      } catch (err) {
+
+        console.error(err);
+
+        toast.error("Something went wrong");
+
+      } finally {
+
+        setCreating(false);
+      }
   };
 
   const handleDelete = async (id: number) => {
-    await deleteTicket(id);
-    loadTickets();
+
+        try {
+
+          setDeleting(true);
+
+          await deleteTicket(id);
+
+          await loadTickets(false);
+
+        } catch (err) {
+
+          console.error(err);
+
+          toast.error("Something went wrong");
+
+        } finally {
+
+          setDeleting(false);
+        }
   };
 
   const navigateButton = () => {
@@ -192,10 +248,17 @@ export default function Home() {
     return null;
   };
 
+  const canDelete  = () => {
+
+  }
+
   const navBtn = navigateButton();
 
   return (
     <div className="page">
+      {deleting && (
+        <OverlayLoader show={deleting} />
+      )}
       {/* HEADER */}
       <header className="header">
         <div>
@@ -232,7 +295,7 @@ export default function Home() {
                   </p>
 
                   <p className="profileRole">
-                    {user?.role}
+                    Role: {user?.role}
                   </p>
                 </div>
 
@@ -293,7 +356,7 @@ export default function Home() {
               <tr>
                 <th>Title</th>
                 <th>Status</th>
-                <th>Assign</th>
+                {user?.role !== "user" && (<th>Assign</th>)}
                 <th>Created By</th>
                 <th className="actionColumn" id="actions">Actions</th>
               </tr>
@@ -323,17 +386,18 @@ export default function Home() {
                       <StatusDropdown
                         ticketId={t.id}
                         value={t.status}
-                        onChange={loadTickets}
+                        onChange={() => loadTickets(false)}
                       />
                     </td>
 
-                    <td>
+                    {user?.role !== "user" && (<td>
                       <AssignDropdown
                         ticketId={t.id}
-                        onAssigned={loadTickets}
+                        onAssigned={() => loadTickets(false)}
                         value={t.assigned_to}
+                        users={users}
                       />
-                    </td>
+                    </td>)}
 
                     <td>
                       <span className="createdByText">
@@ -356,9 +420,14 @@ export default function Home() {
                             ? "Hide"
                             : "Details"}
                         </button>
-
-                        {(user?.role !== "user" ||
-                          user?.id === t.created_by) && (
+                        {(
+                          user?.role === "super_admin" ||
+                          user?.id.toString() === t.created_by?.toString() ||
+                          (
+                            user?.role === "admin" &&
+                            t.created_by_role === "user"
+                          )
+                         ) && (
                           <button
                             className="deleteBtn"
                             onClick={() =>
@@ -459,8 +528,13 @@ export default function Home() {
               <button
                 className="primaryBtn"
                 onClick={handleCreate}
+                disabled={creating}
               >
-                Create Ticket
+                {creating ? (
+                  <span className="btnLoader"></span>
+                ) : (
+                  "Create Ticket"
+                )}
               </button>
             </div>
           </div>

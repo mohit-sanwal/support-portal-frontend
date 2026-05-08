@@ -1,67 +1,118 @@
-/* 🔹 Base = Mobile first */
+/* superAdmin.module.css */
 
 .container {
-  padding: 12px;
-  max-width: 100%;
+  padding: 18px;
+  max-width: 1200px;
+  margin: auto;
   font-family: Arial, sans-serif;
 }
 
 .headerTop {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
 }
 
 .title {
-  font-size: 18px;
-  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .backBtn {
-  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
   border: none;
   background: #111;
   color: white;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* 🔹 Table → mobile me card banega */
-.table {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Card style (mobile) */
-.row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid #eee;
   border-radius: 8px;
-  background: #fff;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.backBtn:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.table {
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.5fr;
+  align-items: center;
+  background: #f5f5f5;
+  padding: 14px 16px;
+  font-weight: 700;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.5fr;
+  align-items: center;
+  padding: 14px 16px;
+  border-top: 1px solid #eee;
+}
+
+.adminHeader,
+.adminRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+}
+
+.adminHeader {
+  background: #f5f5f5;
+  padding: 14px 16px;
+  font-weight: 700;
+}
+
+.adminRow {
+  padding: 14px 16px;
+  border-top: 1px solid #eee;
 }
 
 .role {
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 .actions {
   display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 8px;
 }
 
-/* Buttons */
 .actions button {
-  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 5px;
-  font-size: 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.actions button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
 }
 
 .promote {
@@ -69,7 +120,7 @@
   color: white;
 }
 
-.demote {
+.makeUser {
   background: #f0ad4e;
   color: white;
 }
@@ -79,36 +130,57 @@
   color: white;
 }
 
-/* 🔥 Desktop view */
-@media (min-width: 768px) {
+.roleBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* MOBILE */
+
+@media (max-width: 767px) {
+
+  .container {
+    padding: 12px;
+  }
+
   .headerTop {
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .title {
-    text-align: center;
-    flex: 1;
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .table {
-    border: 1px solid #ddd;
+    border: none;
+    background: transparent;
+  }
+
+  .header,
+  .adminHeader {
+    display: none;
+  }
+
+  .row,
+  .adminRow {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid #eee;
     border-radius: 10px;
-    overflow: hidden;
+    background: white;
   }
 
-  .header {
-    display: grid;
-    grid-template-columns: 1fr 1fr 2fr;
-    background: #f5f5f5;
-    padding: 12px;
-    font-weight: bold;
+  .actions {
+    width: 100%;
   }
 
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 2fr;
-    align-items: center;
-    border-top: 1px solid #eee;
+  .actions button {
+    width: 100%;
+    justify-content: center;
   }
 }

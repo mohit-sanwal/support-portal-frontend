@@ -1,322 +1,282 @@
 import {
-  LoginRequest,
-  RegisterRequest, 
-  AuthResponse , 
-  ErrorResponse, 
-  Ticket, 
-  AuthRequest, 
+  Ticket,
+  AuthResponse,
+  AuthRequest,
   User,
   ApiMessage
-} from '../types'
+} from "../types";
 
+console.log(
+  "base url--- ",
+  `${process.env.NEXT_PUBLIC_API_BASE_URL}`
+);
 
-console.log('base url--- ', `${process.env.NEXT_PUBLIC_API_BASE_URL}`)
-const BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
-
+const BASE_URL =
+  `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
 
 
 // ---------------- HELPERS ----------------
+
 const getToken = (): string | null => {
   return localStorage.getItem("token");
 };
 
-const getAuthHeaders = () => {
-  const token = getToken();
+const logoutUser = () => {
 
-  return {
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+
+  window.location.href = "/login";
+};
+
+export const admin_or_superAdmin = (
+  role: any
+) => {
+  return ["admin", "super_admin"].includes(role);
+};
+
+
+// COMMON FETCH WRAPPER
+const apiFetch = async (
+  endpoint: string,
+  options: RequestInit = {},
+  requiresAuth = true
+) => {
+
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
   };
+
+  // protected routes only
+  if (requiresAuth) {
+
+    const token = getToken();
+
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(
+    `${BASE_URL}${endpoint}`,
+    {
+      ...options,
+
+      headers: {
+        ...headers,
+        ...(options.headers || {}),
+      },
+    }
+  );
+
+  // invalid / expired token
+  if (res.status === 401) {
+
+    logoutUser();
+
+    throw new Error("Invalid token");
+  }
+
+  const data = await res.json();
+
+  if (!res.ok) {
+
+    throw new Error(
+      data.error || "Something went wrong"
+    );
+  }
+
+  return data;
 };
 
-export const admin_or_superAdmin = (role: any) => {
-  return ['admin', 'super_admin'].includes(role);
-}
 
-// ---------------- API ----------------
+// ---------------- TICKETS ----------------
 
-// GET tickets (FIXED: added token)
-export const getTickets = async (): Promise<Ticket[]> => {
-  const res = await fetch(`${BASE_URL}/tickets`, {
-    headers: getAuthHeaders(),
-  });
+export const getTickets = async (): Promise<
+  Ticket[]
+> => {
 
-  if (!res.ok) throw new Error("Failed to fetch tickets");
-
-  return res.json();
+  return apiFetch("/tickets");
 };
 
-// CREATE ticket
 export const createTicket = async (
   data: Partial<Ticket>
 ): Promise<Ticket> => {
-  const res = await fetch(`${BASE_URL}/create-ticket`, {
+
+  return apiFetch("/create-ticket", {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) throw new Error("Failed to create ticket");
-
-  return res.json();
 };
 
-// UPDATE ticket
 export const updateTicket = async (
   id: number,
   data: Partial<Ticket>
 ): Promise<Ticket> => {
-  const res = await fetch(`${BASE_URL}/tickets/${id}`, {
+
+  return apiFetch(`/tickets/${id}`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) throw new Error("Failed to update ticket");
-
-  return res.json();
 };
 
-// DELETE ticket
-export const deleteTicket = async (id: number): Promise<{ message: string }> => {
-  const res = await fetch(`${BASE_URL}/tickets/${id}`, {
+export const deleteTicket = async (
+  id: number
+): Promise<ApiMessage> => {
+
+  return apiFetch(`/tickets/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
-
-  if (!res.ok) throw new Error("Failed to delete ticket");
-
-  return res.json();
 };
+
 
 // ---------------- AUTH ----------------
 
-// token removed (IMPORTANT FIX)
 export const registerApi = async (
   data: AuthRequest
-): Promise<{ message: string }> => {
-  const res = await fetch(`${BASE_URL}/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+): Promise<ApiMessage> => {
+
+  return apiFetch(
+    "/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify(data),
     },
-    body: JSON.stringify(data),
-  });
-
-  const jsonData = await res.json(); // FIXED
-
-  if (!res.ok) throw new Error(jsonData.error);
-
-  return jsonData;
+    false
+  );
 };
 
 export const loginApi = async (
   data: AuthRequest
 ): Promise<AuthResponse> => {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+
+  return apiFetch(
+    "/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify(data),
     },
-    body: JSON.stringify(data),
-  });
-
-  const jsonData = await res.json();
-
-  if (!res.ok) throw new Error(jsonData.error);
-
-  return jsonData;
+    false
+  );
 };
 
 
-export const getUsersApi = async (): Promise<User[]> => {
-  const token = localStorage.getItem("token");
+// ---------------- USERS ----------------
 
-  const res = await fetch(`${BASE_URL}/users`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
+export const getUsersApi = async (): Promise<
+  User[]
+> => {
 
-  const jsonData = await res.json();
-
-  if (!res.ok) throw new Error(jsonData.error);
-
-  return jsonData;
+  return apiFetch("/users");
 };
 
-export const makeAdminApi = async (id: number): Promise<{ message: string }> => {
-  const token = localStorage.getItem("token");
+export const makeAdminApi = async (
+  id: number
+): Promise<ApiMessage> => {
 
-  const res = await fetch(`${BASE_URL}/users/${id}/make-admin`, {
+  return apiFetch(`/users/${id}/make-admin`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
   });
-
-  const jsonData = await res.json();
-
-  if (!res.ok) throw new Error(jsonData.error);
-
-  return jsonData;
 };
 
+export const makeUserApi = async (
+  id: number
+): Promise<ApiMessage> => {
 
-export const demoteUserApi = async (id: number): Promise<ApiMessage> => {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${BASE_URL}/users/${id}/demote`, {
+  return apiFetch(`/users/${id}/make-user`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
   });
-
-  const jsonData = await res.json();
-
-  if (!res.ok) throw new Error(jsonData.error);
-
-  return jsonData;
 };
 
+export const deleteUserApi = async (
+  id: number
+): Promise<ApiMessage> => {
 
-export const deleteUserApi = async (id: number): Promise<ApiMessage> => {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${BASE_URL}/users/${id}`, {
+  return apiFetch(`/users/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
-
-  const jsonData = await res.json();
-
-  if (!res.ok) throw new Error(jsonData.error);
-
-  return jsonData;
 };
-
 
 export const getCurrentUserApi = async (): Promise<User> => {
-  const token = localStorage.getItem("token");
 
-  const res = await fetch(`${BASE_URL}/auth/current-user`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) throw new Error(data.error);
-
-  return data;
+  return apiFetch("/auth/current-user");
 };
-
 
 export const getAssignableUsersApi = async (): Promise<User[]> => {
-  const token = localStorage.getItem("token");
 
-  const res = await fetch(`${BASE_URL}/users/assignable`, {
-    headers: getAuthHeaders(),
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error);
-
-  return data;
+  return apiFetch("/users/assignable");
 };
 
+
+// ---------------- ASSIGN ----------------
 
 export const assignTicketApi = async (
   ticketId: number,
   userId: number
 ) => {
-  const token = localStorage.getItem("token");
 
-  const res = await fetch(`${BASE_URL}/tickets/${ticketId}/assign`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ user_id: userId }),
-  });
+  return apiFetch(
+    `/tickets/${ticketId}/assign`,
+    {
+      method: "POST",
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error);
-
-  return data;
+      body: JSON.stringify({
+        assigned_to: userId,
+      }),
+    }
+  );
 };
 
+
+// ---------------- COMMENTS ----------------
 
 export const addCommentApi = async (
   ticketId: number,
-  data: { content: string; parent_id?: number }
+  data: {
+    content: string;
+    parent_id?: number;
+  }
 ) => {
-  const token = localStorage.getItem("token");
 
-  const res = await fetch(
-    `${BASE_URL}/tickets/${ticketId}/comments`,
+  return apiFetch(
+    `/tickets/${ticketId}/comments`,
     {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify(data),
     }
   );
-
-  const json = await res.json();
-
-  if (!res.ok) throw new Error(json.error);
-
-  return json;
 };
 
-export const getCommentsApi = async (ticketId: number) => {
-  const token = localStorage.getItem("token");
+export const getCommentsApi = async (
+  ticketId: number
+) => {
 
-  const res = await fetch(
-    `${BASE_URL}/tickets/${ticketId}/comments`,
-    {
-      headers: getAuthHeaders(),
-    }
+  return apiFetch(
+    `/tickets/${ticketId}/comments`
   );
-
-  const json = await res.json();
-
-  if (!res.ok) throw new Error(json.error);
-
-  return json;
 };
 
 export const updateCommentApi = async (
   id: number,
   data: { content: string }
 ) => {
-  const token = localStorage.getItem("token");
 
-  const res = await fetch(`${BASE_URL}/comments/${id}`, {
+  return apiFetch(`/comments/${id}`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-
-  const json = await res.json();
-
-  if (!res.ok) throw new Error(json.error);
-
-  return json;
 };
 
-export const deleteCommentApi = async (id: number) => {
-  const token = localStorage.getItem("token");
+export const deleteCommentApi = async (
+  id: number
+) => {
 
-  const res = await fetch(`${BASE_URL}/comments/${id}`, {
+  return apiFetch(`/comments/${id}`, {
     method: "DELETE",
-    headers:getAuthHeaders(),
   });
-
-  const json = await res.json();
-
-  if (!res.ok) throw new Error(json.error);
-
-  return json;
 };
-
 
 
 // ---------------- LOGOUT ----------------
+
 export const logout = (): void => {
-  localStorage.removeItem("token");
+  logoutUser();
 };
